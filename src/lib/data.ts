@@ -23,7 +23,7 @@ export const menuItems: MenuItem[] = [
     name: "Regular",
     description: "CheckCheck Rice, Chicken, Special Salad Mix, Eggs",
     price: 60,
-    image: "/meal.jpg",
+    image: "/plate.png",
     category: "Meals",
   },
   {
@@ -31,7 +31,7 @@ export const menuItems: MenuItem[] = [
     name: "Loaded",
     description: "More CheckCheck Rice, Larger Chicken, Special Salad Mix, Eggs & Sausage",
     price: 80,
-    image: "/meal.jpg",
+    image: "/plate.png",
     category: "Meals",
   },
   {
@@ -39,7 +39,7 @@ export const menuItems: MenuItem[] = [
     name: "Odogwu",
     description: "More CheckCheck Rice, 2 Larger Chickens, Special Salad Mix, Eggs & Sausage",
     price: 120,
-    image: "/meal.jpg",
+    image: "/plate.png",
     category: "Meals",
   },
 ];
