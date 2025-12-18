@@ -67,6 +67,12 @@ export default function CartPage() {
   );
 
   const handlePlaceOrder = () => {
+    // Require user to be logged in
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+
     if (!customerName || !customerPhone || !deliveryLocation || items.length === 0) {
       return;
     }
@@ -76,6 +82,14 @@ export default function CartPage() {
   const handleConfirmOrder = async () => {
     // Prevent double submissions
     if (isLoadingOrder) {
+      return;
+    }
+
+    // Verify user is still logged in
+    if (!user) {
+      alert("You must be logged in to place an order. Please log in and try again.");
+      setShowConfirmation(false);
+      setShowLoginModal(true);
       return;
     }
 
@@ -369,6 +383,30 @@ export default function CartPage() {
           </motion.div>
         )}
 
+        {!user && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-r from-red-50 to-orange-50 border-2 border-[#DC2626] rounded-xl sm:rounded-2xl p-4 sm:p-5 mb-6 sm:mb-8 shadow-sm"
+          >
+            <div className="flex items-start gap-3">
+              <AlertCircle size={24} className="text-[#DC2626] flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="font-semibold text-[#DC2626] mb-1">Login Required</p>
+                <p className="text-sm text-gray-700 mb-3">
+                  You must be logged in to place an order. Please log in or create an account to continue.
+                </p>
+                <button
+                  onClick={() => setShowLoginModal(true)}
+                  className="inline-flex items-center gap-2 bg-[#DC2626] hover:bg-[#B91C1C] text-white px-4 py-2 rounded-lg font-semibold text-sm transition-all"
+                >
+                  Log In Now
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
           <div className="lg:col-span-2 space-y-4 md:space-y-6">
             {/* Cart Items */}
@@ -610,13 +648,18 @@ export default function CartPage() {
               </div>
               <button
                 onClick={handlePlaceOrder}
-                disabled={!customerName || !customerPhone || !deliveryLocation || items.length === 0}
+                disabled={!user || !customerName || !customerPhone || !deliveryLocation || items.length === 0}
                 className="w-full bg-gradient-to-r from-[#DC2626] to-[#B91C1C] hover:shadow-lg disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white py-3 md:py-4 rounded-lg sm:rounded-xl font-bold text-base md:text-lg transition-all flex items-center justify-center gap-2 group"
               >
                 <Truck size={20} />
                 Proceed to Checkout
               </button>
-              {(!customerName || !customerPhone || !deliveryLocation) && (
+              {!user && (
+                <p className="text-center text-red-600 text-xs font-semibold mt-2 md:mt-3">
+                  Please log in to place an order
+                </p>
+              )}
+              {user && (!customerName || !customerPhone || !deliveryLocation) && (
                 <p className="text-center text-gray-400 text-xs mt-2 md:mt-3">
                   Please fill in all required fields
                 </p>
