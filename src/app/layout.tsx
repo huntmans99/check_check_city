@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: "Check Check City | Delicious Meals Delivered",
   description: "Looks good, tastes even better. Order your favorite CheckCheck meals for delivery in Accra.",
   icons: {
-    icon: "https://slelguoygbfzlpylpxfs.supabase.co/storage/v1/render/image/public/document-uploads/LOGO-1765892314660.jpeg",
+    icon: "/favicon.png",
   },
 };
 
