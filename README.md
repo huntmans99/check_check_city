@@ -6,7 +6,7 @@ A modern food delivery application built with Next.js, featuring user authentica
 
 Features
 
-### 🛒 Customer Features
+###  Customer Features
 Browse Menu: View available food items with images and descriptions
 Shopping Cart: Add/remove items with real-time price calculation
 User Accounts: Create account with phone, name, and address
@@ -16,7 +16,7 @@ Order History: Track past orders with dates and statuses
 Delivery: Select delivery location with dropdown menu
 Payment on Delivery: COD option for all orders
 
-### 👨‍💼 Admin Features
+###  Admin Features
 Order Dashboard: View all incoming orders in real-time
 Order Management: Update order status (Pending → Confirmed → Processing → Ready → Delivered)
 Date Grouping: Orders organized by date with sticky headers for easy navigation
@@ -24,7 +24,7 @@ Auto-Refresh: Dashboard refreshes every 30 seconds automatically
 Manual Refresh: Button to refresh orders on demand
 Admin Authentication: Password-protected admin access
 
-### 🔐 Security & Authentication
+###  Security & Authentication
 Phone + Password Login: Secure authentication with bcryptjs hashing (10 salt rounds)
 SMS OTP: Two-factor password reset via Vonage SMS
 Environment Variables: Secure credential management
@@ -173,4 +173,4 @@ MIT License - Open source project
 
 ---
 
-**Built with ❤️ for Check Check City**
+**Built with joy for Check Check City**
