@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import { Order, OrderStatus } from "@/types/order";
-import { LogOut, Loader, AlertCircle, CheckCircle, Clock, Package } from "lucide-react";
+import { LogOut, Loader, AlertCircle, Download, Search, Eye } from "lucide-react";
 import Link from "next/link";
+import * as XLSX from "xlsx";
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -14,6 +15,10 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [updating, setUpdating] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all");
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [showModal, setShowModal] = useState(false);
 
   const handleLogin = () => {
     if (password === process.env.NEXT_PUBLIC_ADMIN_PASSWORD || password === "check123") {
@@ -36,8 +41,6 @@ export default function AdminPage() {
         return;
       }
 
-      console.log("Fetching orders from Supabase...");
-
       const { data, error } = await supabase
         .from("orders")
         .select("*")
@@ -45,13 +48,8 @@ export default function AdminPage() {
 
       if (error) {
         console.error("Supabase error:", error);
-        if (error.code === "PGRST116") {
-          setError("Orders table not found. Please create the table in Supabase SQL Editor using the provided script.");
-        } else {
-          setError(`Failed to fetch orders: ${error.message}`);
-        }
+        setError(`Failed to fetch orders: ${error.message}`);
       } else {
-        console.log("Orders fetched:", data);
         setOrders(data || []);
         setError("");
       }
@@ -67,7 +65,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (isAuthenticated) {
       fetchOrders();
-      const interval = setInterval(fetchOrders, 30000); // 30 seconds
+      const interval = setInterval(fetchOrders, 30000);
       return () => clearInterval(interval);
     }
   }, [isAuthenticated]);
@@ -103,9 +101,9 @@ export default function AdminPage() {
       case "processing":
         return "bg-purple-100 text-purple-800 border-purple-300";
       case "ready":
-        return "bg-green-100 text-green-800 border-green-300";
+        return "bg-indigo-100 text-indigo-800 border-indigo-300";
       case "delivered":
-        return "bg-gray-100 text-gray-800 border-gray-300";
+        return "bg-green-100 text-green-800 border-green-300";
       default:
         return "bg-gray-100 text-gray-800 border-gray-300";
     }
@@ -114,88 +112,104 @@ export default function AdminPage() {
   const getStatusIcon = (status: OrderStatus) => {
     switch (status) {
       case "pending":
-        return <Clock size={18} />;
+        return "🕐";
       case "confirmed":
-        return <CheckCircle size={18} />;
+        return "✓";
       case "processing":
-        return <Package size={18} />;
+        return "⚙";
       case "ready":
-        return <CheckCircle size={18} />;
+        return "📦";
       case "delivered":
-        return <CheckCircle size={18} />;
+        return "✓✓";
       default:
-        return <AlertCircle size={18} />;
+        return "?";
     }
   };
 
-  // Group orders by date
-  const groupOrdersByDate = (ordersList: Order[]) => {
-    const grouped: { [key: string]: Order[] } = {};
-    
-    ordersList.forEach((order) => {
-      const date = new Date(order.created_at);
-      const dateKey = date.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-      
-      if (!grouped[dateKey]) {
-        grouped[dateKey] = [];
-      }
-      grouped[dateKey].push(order);
-    });
+  const filteredOrders = orders.filter((order) => {
+    const matchesSearch =
+      order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.customer_phone.includes(searchTerm) ||
+      order.id.includes(searchTerm);
+    const matchesStatus = statusFilter === "all" || order.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
-    // Sort dates in descending order (newest first)
-    return Object.entries(grouped).sort((a, b) => {
-      return new Date(b[0]).getTime() - new Date(a[0]).getTime();
-    });
+  const exportToExcel = () => {
+    const exportData = filteredOrders.map((order) => ({
+      "Order ID": order.id?.slice(0, 8),
+      "Customer Name": order.customer_name,
+      "Customer Phone": order.customer_phone,
+      "Delivery Location": order.delivery_location,
+      "Address": order.customer_address || "",
+      "Items": order.items?.map((i) => `${i.name} x${i.quantity}`).join("; ") || "",
+      "Subtotal": order.subtotal?.toFixed(2),
+      "Delivery Fee": order.delivery_fee?.toFixed(2),
+      "Total": order.total?.toFixed(2),
+      "Status": order.status,
+      "Created": new Date(order.created_at).toLocaleString(),
+      "Updated": new Date(order.updated_at).toLocaleString(),
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Orders");
+
+    const colWidths = [
+      { wch: 12 },
+      { wch: 18 },
+      { wch: 14 },
+      { wch: 18 },
+      { wch: 20 },
+      { wch: 30 },
+      { wch: 12 },
+      { wch: 14 },
+      { wch: 12 },
+      { wch: 12 },
+      { wch: 20 },
+      { wch: 20 },
+    ];
+    worksheet["!cols"] = colWidths;
+
+    XLSX.writeFile(workbook, `CheckCheck_Orders_${new Date().toISOString().split("T")[0]}.xlsx`);
   };
-
-  const groupedOrders = groupOrdersByDate(orders);
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center py-12 px-4">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md"
         >
           <h1 className="font-display text-3xl font-bold text-[#0A0A0A] mb-2 text-center">
-            Admin Dashboard
+            Admin Panel
           </h1>
-          <p className="text-gray-600 text-center mb-8">Check Check City</p>
+          <p className="text-gray-600 text-center mb-6">Check Check City Order Management</p>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Admin Password
-              </label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && handleLogin()}
                 placeholder="Enter admin password"
-                className="w-full px-4 py-3 rounded-lg border-2 border-gray-200 focus:border-[#DC2626] focus:ring-2 focus:ring-[#DC2626]/20 outline-none transition-all text-sm"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#DC2626] focus:ring-2 focus:ring-[#DC2626]/20 outline-none transition-all"
               />
             </div>
 
             {error && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="bg-red-50 border-2 border-red-300 text-red-800 px-4 py-3 rounded-lg text-sm flex items-center gap-2"
-              >
+              <div className="bg-red-50 border-2 border-red-300 text-red-800 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
                 <AlertCircle size={18} />
                 {error}
-              </motion.div>
+              </div>
             )}
 
             <button
               onClick={handleLogin}
-              className="w-full bg-[#DC2626] hover:bg-[#B91C1C] text-white px-4 py-3 rounded-lg font-semibold transition-all"
+              className="w-full bg-gradient-to-r from-[#DC2626] to-[#B91C1C] hover:shadow-lg text-white py-3 rounded-lg font-bold transition-all"
             >
               Login
             </button>
@@ -250,154 +264,98 @@ export default function AdminPage() {
               <p className="text-gray-600">Loading orders...</p>
             </div>
           </div>
-        ) : orders.length === 0 ? (
-          <div className="text-center py-12">
-            <Package size={48} className="text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600">No orders yet</p>
+        ) : filteredOrders.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-lg p-12 text-center">
+            <p className="text-gray-600">No orders found</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between mb-6">
-              <p className="text-gray-600 text-sm">
-                Total Orders: <span className="font-bold text-[#DC2626]">{orders.length}</span>
-              </p>
-              <button
-                onClick={fetchOrders}
-                className="text-sm bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg transition-all"
-              >
-                Refresh
-              </button>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-white rounded-xl shadow-lg overflow-hidden"
+          >
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gradient-to-r from-gray-800 to-gray-900 text-white">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-sm font-bold">Order ID</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold">Customer</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold">Phone</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold">Location</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold">Items</th>
+                    <th className="px-6 py-4 text-right text-sm font-bold">Total</th>
+                    <th className="px-6 py-4 text-left text-sm font-bold">Status</th>
+                    <th className="px-6 py-4 text-center text-sm font-bold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredOrders.map((order, index) => (
+                    <tr
+                      key={order.id}
+                      className={`border-t border-gray-200 hover:bg-gray-50 transition-colors ${
+                        index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                      }`}
+                    >
+                      <td className="px-6 py-4 text-sm font-mono font-semibold text-[#DC2626]">
+                        {order.id?.slice(0, 8)}
+                      </td>
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                        {order.customer_name}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{order.customer_phone}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{order.delivery_location}</td>
+                      <td className="px-6 py-4 text-sm">
+                        <div className="text-gray-600 truncate max-w-xs">
+                          {order.items?.length === 1
+                            ? `${order.items[0].name} x${order.items[0].quantity}`
+                            : `${order.items?.length || 0} items`}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm font-bold text-[#DC2626]">
+                        GH₵{order.total?.toFixed(2)}
+                      </td>
+                      <td className="px-6 py-4 text-sm">
+                        <span
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border-2 ${getStatusColor(
+                            order.status
+                          )}`}
+                        >
+                          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => {
+                              setSelectedOrder(order);
+                              setShowModal(true);
+                            }}
+                            className="p-2 hover:bg-blue-100 rounded-lg transition-colors text-blue-600"
+                            title="View details"
+                          >
+                            <Eye size={18} />
+                          </button>
+                          <select
+                            value={order.status}
+                            onChange={(e) => updateOrderStatus(order.id, e.target.value as OrderStatus)}
+                            disabled={updating === order.id}
+                            className="px-2 py-1 text-sm border-2 border-gray-300 rounded-lg focus:border-[#DC2626] outline-none transition-all disabled:opacity-50"
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="processing">Processing</option>
+                            <option value="ready">Ready</option>
+                            <option value="delivered">Delivered</option>
+                          </select>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-
-            {groupedOrders.map(([dateKey, dayOrders], dateIndex) => (
-              <motion.div
-                key={dateKey}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: dateIndex * 0.1 }}
-                className="space-y-3"
-              >
-                <div className="sticky top-20 z-10 bg-gradient-to-r from-[#DC2626] to-[#B91C1C] rounded-lg p-4 shadow-md">
-                  <h2 className="font-display text-xl font-bold text-white">
-                    {dateKey}
-                  </h2>
-                  <p className="text-red-100 text-sm">
-                    {dayOrders.length} order{dayOrders.length !== 1 ? "s" : ""}
-                  </p>
-                </div>
-
-                {dayOrders.map((order, orderIndex) => (
-                  <motion.div
-                    key={order.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: (dateIndex * 0.1) + (orderIndex * 0.05) }}
-                    className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all"
-                  >
-                <div className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <h3 className="font-semibold text-lg text-[#0A0A0A] mb-3">
-                        Order #{order.id?.slice(0, 8) || "N/A"}
-                      </h3>
-                      <div className="space-y-2 text-sm">
-                        <div>
-                          <p className="text-gray-600">Customer</p>
-                          <p className="font-medium text-[#0A0A0A]">{order.customer_name}</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-600">Phone</p>
-                          <p className="font-medium text-[#0A0A0A]">{order.customer_phone}</p>
-                        </div>
-                        <div>
-                          <p className="text-gray-600">Delivery Location</p>
-                          <p className="font-medium text-[#0A0A0A]">{order.delivery_location}</p>
-                        </div>
-                        {order.customer_address && (
-                          <div>
-                            <p className="text-gray-600">Address</p>
-                            <p className="font-medium text-[#0A0A0A]">{order.customer_address}</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                        <div className="space-y-1 mb-3">
-                          {order.items && order.items.length > 0 ? (
-                            <>
-                              <p className="text-xs font-medium text-gray-600 mb-2">Items</p>
-                              {order.items.map((item, i) => (
-                                <div key={i} className="flex justify-between text-sm">
-                                  <span>
-                                    {item.name} x{item.quantity}
-                                  </span>
-                                  <span className="font-medium">
-                                    GH₵{(item.price * item.quantity).toFixed(2)}
-                                  </span>
-                                </div>
-                              ))}
-                            </>
-                          ) : (
-                            <p className="text-gray-500 text-sm">No items</p>
-                          )}
-                        </div>
-                        <div className="border-t border-gray-200 pt-3 mt-3 space-y-1">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Subtotal:</span>
-                            <span>GH₵{order.subtotal?.toFixed(2) || "0.00"}</span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Delivery:</span>
-                            <span>GH₵{order.delivery_fee?.toFixed(2) || "0.00"}</span>
-                          </div>
-                          <div className="flex justify-between font-bold text-base">
-                            <span>Total:</span>
-                            <span className="text-[#DC2626]">
-                              GH₵{order.total?.toFixed(2) || "0.00"}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <p className="text-xs font-medium text-gray-600">Order Status</p>
-                        <div className="flex flex-wrap gap-2">
-                          {(["pending", "confirmed", "processing", "ready", "delivered"] as OrderStatus[]).map(
-                            (status) => (
-                              <button
-                                key={status}
-                                onClick={() => updateOrderStatus(order.id, status)}
-                                disabled={updating === order.id}
-                                className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all flex items-center gap-1 ${
-                                  order.status === status
-                                    ? `${getStatusColor(status)} ring-2 ring-offset-2`
-                                    : `${getStatusColor(status)} opacity-50 hover:opacity-100`
-                                } ${updating === order.id ? "opacity-50 cursor-not-allowed" : ""}`}
-                              >
-                                {order.status === status && (
-                                  <span>{getStatusIcon(status)}</span>
-                                )}
-                                {status.charAt(0).toUpperCase() + status.slice(1)}
-                              </button>
-                            )
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 pt-4 border-t border-gray-200 flex justify-between text-xs text-gray-500">
-                    <span>Created: {new Date(order.created_at).toLocaleString()}</span>
-                    <span>Updated: {new Date(order.updated_at).toLocaleString()}</span>
-                  </div>
-                </div>
-                  </motion.div>
-                ))}
-              </motion.div>
-            ))}
-          </div>
+          </motion.div>
         )}
       </div>
     </div>
