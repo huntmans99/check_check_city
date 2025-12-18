@@ -42,6 +42,7 @@ export default function CartPage() {
   const [address, setAddress] = useState("");
   const [searchLocation, setSearchLocation] = useState("");
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [confirmedOrderTotal, setConfirmedOrderTotal] = useState(0);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showPasswordReset, setShowPasswordReset] = useState(false);
@@ -114,6 +115,10 @@ export default function CartPage() {
 
       console.log("Order saved successfully:", data);
 
+      // Store the order total before clearing cart
+      const orderTotal = parseFloat(total.toFixed(2));
+      setConfirmedOrderTotal(orderTotal);
+
       // Clear cart and show success message
       clearCart();
       setShowConfirmation(false);
@@ -156,7 +161,7 @@ export default function CartPage() {
             </p>
             <div className="bg-gradient-to-r from-orange-50 to-red-50 border-2 border-[#DC2626] rounded-xl p-4 sm:p-6 mb-8 mt-6">
               <p className="text-gray-700 font-semibold mb-1 text-sm sm:text-base">Total Amount</p>
-              <p className="text-[#DC2626] font-bold text-3xl sm:text-4xl mb-3">GH₵{total.toFixed(2)}</p>
+              <p className="text-[#DC2626] font-bold text-3xl sm:text-4xl mb-3">GH₵{confirmedOrderTotal.toFixed(2)}</p>
               <p className="text-gray-600 text-sm sm:text-base font-medium">Payment on Delivery</p>
             </div>
             <Link
