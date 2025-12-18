@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingCart, Menu, X } from "lucide-react";
+import { ShoppingCart, Menu, X, Settings, Package } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
+import { useUser } from "@/lib/user-context";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function Header() {
   const { itemCount } = useCart();
+  const { user } = useUser();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -41,9 +43,26 @@ export function Header() {
             >
               Delivery Areas
             </Link>
+            {user && (
+              <Link
+                href="/orders"
+                className="text-white hover:text-[#F7D000] transition-colors font-medium"
+              >
+                Orders
+              </Link>
+            )}
           </nav>
 
           <div className="flex items-center gap-4">
+            {user && (
+              <Link
+                href="/orders"
+                className="hidden md:flex items-center justify-center bg-blue-700 hover:bg-blue-600 text-white p-2.5 rounded-full transition-all font-medium"
+                title="My Orders"
+              >
+                <Package size={20} />
+              </Link>
+            )}
             <Link
               href="/cart"
               className="relative flex items-center gap-2 bg-[#DC2626] hover:bg-[#B91C1C] text-white px-4 py-2 rounded-full transition-all font-medium"
@@ -96,6 +115,24 @@ export function Header() {
                 className="text-white hover:text-[#F7D000] transition-colors font-medium py-2"
               >
                 Delivery Areas
+              </Link>
+              {user && (
+                <Link
+                  href="/orders"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-white hover:text-[#F7D000] transition-colors font-medium py-2 flex items-center gap-2"
+                >
+                  <Package size={18} />
+                  My Orders
+                </Link>
+              )}
+              <Link
+                href="/admin"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-white hover:text-[#F7D000] transition-colors font-medium py-2 flex items-center gap-2 border-t border-gray-700 pt-4"
+              >
+                <Settings size={18} />
+                Admin Dashboard
               </Link>
             </nav>
           </motion.div>

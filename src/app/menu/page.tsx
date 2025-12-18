@@ -42,7 +42,7 @@ export default function MenuPage() {
               <ul className="space-y-3 text-gray-300">
                 <li className="flex items-center gap-3">
                   <span className="w-2 h-2 bg-[#DC2626] rounded-full" />
-                  Signature CheckCheck Jollof Rice
+                  Signature CheckCheck Rice
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="w-2 h-2 bg-[#DC2626] rounded-full" />

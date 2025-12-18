@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { MapPin, Phone, Clock } from "lucide-react";
+import { MapPin, Phone, Clock, Settings } from "lucide-react";
+import { businessContact } from "@/lib/data";
 
 export function Footer() {
   return (
@@ -34,6 +35,10 @@ export function Footer() {
               <Link href="/cart" className="text-gray-400 hover:text-[#F7D000] transition-colors">
                 Cart
               </Link>
+              <Link href="/admin" className="text-gray-400 hover:text-[#F7D000] transition-colors flex items-center gap-2">
+                <Settings size={16} />
+                Admin Portal
+              </Link>
             </nav>
           </div>
 
@@ -44,11 +49,19 @@ export function Footer() {
             <div className="flex flex-col gap-3">
               <div className="flex items-center gap-3 text-gray-400">
                 <MapPin size={18} className="text-[#DC2626]" />
-                <span>Accra, Ghana</span>
+                <span>{businessContact.location}</span>
               </div>
-              <div className="flex items-center gap-3 text-gray-400">
-                <Phone size={18} className="text-[#DC2626]" />
-                <span>+233 XX XXX XXXX</span>
+              <div className="flex flex-col gap-2">
+                {businessContact.phones.map((phone, index) => (
+                  <a
+                    key={index}
+                    href={`tel:${phone}`}
+                    className="flex items-center gap-3 text-gray-400 hover:text-[#F7D000] transition-colors"
+                  >
+                    <Phone size={18} className="text-[#DC2626]" />
+                    <span>{phone}</span>
+                  </a>
+                ))}
               </div>
               <div className="flex items-center gap-3 text-gray-400">
                 <Clock size={18} className="text-[#DC2626]" />

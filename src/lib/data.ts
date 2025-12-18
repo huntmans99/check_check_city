@@ -12,6 +12,11 @@ export interface DeliveryLocation {
   price: number;
 }
 
+export const businessContact = {
+  location: "East Legon (Boundary Road)",
+  phones: ["0549537343", "0206819878"],
+};
+
 export const menuItems: MenuItem[] = [
   {
     id: "regular",
@@ -68,6 +73,7 @@ export const deliveryLocations: DeliveryLocation[] = [
   { name: "Dzorwulu", price: 30.00 },
   { name: "East Airport", price: 35.00 },
   { name: "East Legon", price: 20.00 },
+  { name: "East Legon (Boundary Road)", price: 0.00 },
   { name: "East Legon Hills", price: 30.00 },
   { name: "Gbawe", price: 50.00 },
   { name: "Kaneshie", price: 40.00 },

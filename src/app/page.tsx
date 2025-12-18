@@ -39,7 +39,7 @@ export default function HomePage() {
             </h1>
             <p className="text-gray-300 text-lg sm:text-xl mb-8 max-w-xl">
               Experience the irresistible flavors of Check Check City. Our signature 
-              rice meals with perfectly grilled chicken await you.
+              rice meals, with perfectly grilled chicken await you.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
