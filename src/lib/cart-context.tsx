@@ -36,10 +36,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const savedLocation = localStorage.getItem("checkcheck_delivery_location");
       
       if (savedCart) {
-        setItems(JSON.parse(savedCart));
+        const parsedCart = JSON.parse(savedCart);
+        // Ensure prices are numbers
+        const fixedCart = parsedCart.map((item: any) => ({
+          ...item,
+          item: {
+            ...item.item,
+            price: Number(item.item.price),
+          },
+        }));
+        setItems(fixedCart);
       }
       if (savedLocation) {
-        setDeliveryLocation(JSON.parse(savedLocation));
+        const parsedLocation = JSON.parse(savedLocation);
+        setDeliveryLocation({
+          ...parsedLocation,
+          price: Number(parsedLocation.price),
+        });
       }
     } catch (error) {
       console.error("Failed to load cart from localStorage:", error);
@@ -98,10 +111,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("checkcheck_delivery_location");
   };
 
-  const subtotal = items.reduce((sum, i) => sum + i.item.price * i.quantity, 0);
-  const deliveryFee = deliveryLocation?.price ?? 0;
-  const total = subtotal + deliveryFee;
-  const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
+  const subtotal = items.reduce((sum, i) => sum + (Number(i.item.price) || 0) * (Number(i.quantity) || 0), 0);
+  const deliveryFee = deliveryLocation ? Number(deliveryLocation.price) || 0 : 0;
+  const total = Number((subtotal + deliveryFee).toFixed(2));
+  const itemCount = items.reduce((sum, i) => sum + (Number(i.quantity) || 0), 0);
 
   return (
     <CartContext.Provider
