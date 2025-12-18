@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { VisualEditsMessenger } from "orchids-visual-edits";
 import { CartProvider } from "@/lib/cart-context";
 import { UserProvider } from "@/lib/user-context";
 import { Header } from "@/components/Header";
@@ -29,7 +28,6 @@ export default function RootLayout({
             <Footer />
           </CartProvider>
         </UserProvider>
-        <VisualEditsMessenger />
       </body>
     </html>
   );
