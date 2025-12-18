@@ -44,6 +44,7 @@ export default function CartPage() {
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [confirmedOrderTotal, setConfirmedOrderTotal] = useState(0);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [isLoadingOrder, setIsLoadingOrder] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [showPasswordReset, setShowPasswordReset] = useState(false);
   const [showCreateAccount, setShowCreateAccount] = useState(false);
@@ -73,11 +74,19 @@ export default function CartPage() {
   };
 
   const handleConfirmOrder = async () => {
+    // Prevent double submissions
+    if (isLoadingOrder) {
+      return;
+    }
+
     try {
+      setIsLoadingOrder(true);
+
       if (!supabase) {
         console.error("Supabase not initialized");
         setShowConfirmation(false);
         alert("Database connection failed. Please try again.");
+        setIsLoadingOrder(false);
         return;
       }
 
@@ -110,6 +119,7 @@ export default function CartPage() {
       if (error) {
         console.error("Error saving order:", error);
         alert("Failed to place order: " + error.message);
+        setIsLoadingOrder(false);
         return;
       }
 
@@ -133,6 +143,8 @@ export default function CartPage() {
     } catch (err: any) {
       console.error("Error placing order:", err);
       alert("An error occurred. Please try again.");
+    } finally {
+      setIsLoadingOrder(false);
     }
   };
 
@@ -251,16 +263,27 @@ export default function CartPage() {
           <div className="flex gap-3">
             <button
               onClick={() => setShowConfirmation(false)}
-              className="flex-1 px-4 py-3 rounded-xl border-2 border-gray-300 text-gray-700 font-bold hover:bg-gray-50 transition-all"
+              disabled={isLoadingOrder}
+              className="flex-1 px-4 py-3 rounded-xl border-2 border-gray-300 text-gray-700 font-bold hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Back
             </button>
             <button
               onClick={handleConfirmOrder}
-              className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-[#DC2626] to-[#B91C1C] hover:shadow-lg text-white px-4 py-3 rounded-xl font-bold transition-all"
+              disabled={isLoadingOrder}
+              className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-r from-[#DC2626] to-[#B91C1C] hover:shadow-lg disabled:from-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed text-white px-4 py-3 rounded-xl font-bold transition-all"
             >
-              <Check size={20} />
-              Confirm Order
+              {isLoadingOrder ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Check size={20} />
+                  Confirm Order
+                </>
+              )}
             </button>
           </div>
         </motion.div>
