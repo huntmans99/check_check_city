@@ -26,6 +26,15 @@ export default function CartPage() {
     clearCart,
   } = useCart();
 
+  // Debug logging
+  useEffect(() => {
+    console.log("Cart items:", items);
+    console.log("Delivery location:", deliveryLocation);
+    console.log("Subtotal:", subtotal);
+    console.log("Delivery fee:", deliveryFee);
+    console.log("Total:", total);
+  }, [items, deliveryLocation, subtotal, deliveryFee, total]);
+
   const { user, loginOrSignup, logout, isLoading: userLoading, updateUser } = useUser();
 
   const [customerName, setCustomerName] = useState("");
