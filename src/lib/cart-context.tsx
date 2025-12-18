@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { MenuItem, DeliveryLocation } from "./data";
 
 export interface CartItem {
@@ -27,6 +27,43 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [deliveryLocation, setDeliveryLocation] = useState<DeliveryLocation | null>(null);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Load cart from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedCart = localStorage.getItem("checkcheck_cart");
+      const savedLocation = localStorage.getItem("checkcheck_delivery_location");
+      
+      if (savedCart) {
+        setItems(JSON.parse(savedCart));
+      }
+      if (savedLocation) {
+        setDeliveryLocation(JSON.parse(savedLocation));
+      }
+    } catch (error) {
+      console.error("Failed to load cart from localStorage:", error);
+    }
+    setIsHydrated(true);
+  }, []);
+
+  // Save cart to localStorage whenever it changes
+  useEffect(() => {
+    if (isHydrated) {
+      localStorage.setItem("checkcheck_cart", JSON.stringify(items));
+    }
+  }, [items, isHydrated]);
+
+  // Save delivery location to localStorage whenever it changes
+  useEffect(() => {
+    if (isHydrated) {
+      if (deliveryLocation) {
+        localStorage.setItem("checkcheck_delivery_location", JSON.stringify(deliveryLocation));
+      } else {
+        localStorage.removeItem("checkcheck_delivery_location");
+      }
+    }
+  }, [deliveryLocation, isHydrated]);
 
   const addItem = (item: MenuItem) => {
     setItems((prev) => {
@@ -57,6 +94,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const clearCart = () => {
     setItems([]);
     setDeliveryLocation(null);
+    localStorage.removeItem("checkcheck_cart");
+    localStorage.removeItem("checkcheck_delivery_location");
   };
 
   const subtotal = items.reduce((sum, i) => sum + i.item.price * i.quantity, 0);
