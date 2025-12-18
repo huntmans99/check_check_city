@@ -59,7 +59,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (existingUser) {
-        // User exists - verify password
+        // User exists
+        // If trying to create a new account with this phone, reject
+        if (name || address) {
+          return { success: false, message: "This phone number is already registered. Please log in instead." };
+        }
+
+        // Otherwise, verify password for login
         const passwordMatch = await bcrypt.compare(password, existingUser.password_hash);
         
         if (!passwordMatch) {
@@ -102,6 +108,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
         if (createError) {
           console.error("Error creating user:", createError);
+          // Handle unique constraint error
+          if (createError.code === "23505") {
+            return { success: false, message: "This phone number is already registered. Please log in instead." };
+          }
           return { success: false, message: `Error creating account: ${createError.message}` };
         }
 
