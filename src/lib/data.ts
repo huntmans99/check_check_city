@@ -23,7 +23,7 @@ export const menuItems: MenuItem[] = [
     name: "Regular",
     description: "CheckCheck Rice, Chicken, Special Salad Mix, Eggs",
     price: 60,
-    image: "https://images.unsplash.com/photo-1512058564366-18510be2db19?w=600&q=80",
+    image: "/meal.jpg",
     category: "Meals",
   },
   {
@@ -31,7 +31,7 @@ export const menuItems: MenuItem[] = [
     name: "Loaded",
     description: "More CheckCheck Rice, Larger Chicken, Special Salad Mix, Eggs & Sausage",
     price: 80,
-    image: "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=600&q=80",
+    image: "/meal.jpg",
     category: "Meals",
   },
   {
@@ -39,7 +39,7 @@ export const menuItems: MenuItem[] = [
     name: "Odogwu",
     description: "More CheckCheck Rice, 2 Larger Chickens, Special Salad Mix, Eggs & Sausage",
     price: 120,
-    image: "https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?w=600&q=80",
+    image: "/meal.jpg",
     category: "Meals",
   },
 ];
